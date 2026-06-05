@@ -1,8 +1,21 @@
 import express from 'express';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import db from './db.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+app.use('/api', (req, res, next) => {
+  const token = req.headers['x-api-token'];
+  if (process.env.API_TOKEN && token !== process.env.API_TOKEN) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+});
 
 // ── Transactions ──────────────────────────────────────────────────────────────
 
@@ -209,7 +222,14 @@ app.delete('/api/data', (_req, res) => {
   res.json({ ok: true });
 });
 
+// ── Static frontend (production) ──────────────────────────────────────────────
+
+app.use(express.static(join(__dirname, '../dist')));
+app.get('*', (_req, res) => {
+  res.sendFile(join(__dirname, '../dist/index.html'));
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Budget API → http://localhost:${PORT}`));

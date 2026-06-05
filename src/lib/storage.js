@@ -12,8 +12,12 @@ const DEFAULT_SETTINGS = {
 };
 
 async function apiFetch(path, options = {}) {
+  const token = import.meta.env.VITE_API_TOKEN;
   const res = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'x-api-token': token } : {}),
+    },
     ...options,
   });
   if (!res.ok) throw new Error(`API ${options.method ?? 'GET'} ${path} failed: ${res.status}`);
