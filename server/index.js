@@ -225,7 +225,7 @@ app.delete('/api/data', (_req, res) => {
 // ── Static frontend (production) ──────────────────────────────────────────────
 
 app.use(express.static(join(__dirname, '../dist')));
-app.get('*', (_req, res) => {
+app.use((_req, res) => {
   res.sendFile(join(__dirname, '../dist/index.html'));
 });
 
