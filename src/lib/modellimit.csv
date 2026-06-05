@@ -1,0 +1,7 @@
+Model Name,Tier Status,Requests Per Minute (RPM),Requests Per Day (RPD),Tokens Per Minute (TPM),Input Context Window
+Gemini 2.5 Flash,Free Tier,15 RPM,1500 RPD,1000000 TPM,1048576 tokens
+Gemini 2.5 Flash,Paid Tier,2000 RPM,Unlimited,4000000 TPM,1048576 tokens
+Gemini 2.5 Pro,Free Tier,2 RPM,50 RPD,32000 TPM,2097152 tokens
+Gemini 2.5 Pro,Paid Tier,360 RPM,Unlimited,2000000 TPM,2097152 tokens
+Gemini 2.5 Flash-Lite,Free Tier,30 RPM,1500 RPD,1000000 TPM,1048576 tokens
+Gemini 2.5 Flash-Lite,Paid Tier,4000 RPM,Unlimited,4000000 TPM,1048576 tokens

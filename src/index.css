@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --chart-grid: #e4e4e7;
+  --chart-axis: #a1a1aa;
+  --chart-cursor: #e4e4e7;
+
+  /* Semantic amount colors */
+  --color-amount-negative: #dc2626;
+  --color-amount-positive: #16a34a;
+
+  /* Surface colors */
+  --color-surface-primary: #ffffff;
+  --color-surface-hover: #f4f4f5;
+  --color-border-row: #e4e4e7;
+  --color-text-primary: #18181b;
+  --color-text-secondary: #71717a;
+  --color-text-tertiary: #a1a1aa;
+
+  /* Category pill: Food → green */
+  --pill-food-bg: #EAF3DE;
+  --pill-food-text: #3B6D11;
+  --pill-food-border: #C0DD97;
+  /* Category pill: Groceries → green (same family) */
+  --pill-groceries-bg: #EAF3DE;
+  --pill-groceries-text: #3B6D11;
+  --pill-groceries-border: #C0DD97;
+  /* Category pill: Shopping → amber */
+  --pill-shopping-bg: #FAEEDA;
+  --pill-shopping-text: #854F0B;
+  --pill-shopping-border: #FAC775;
+  /* Category pill: Subscriptions → purple */
+  --pill-subscriptions-bg: #EEEDFE;
+  --pill-subscriptions-text: #534AB7;
+  --pill-subscriptions-border: #CECBF6;
+  /* Category pill: Bills → blue */
+  --pill-bills-bg: #E6F1FB;
+  --pill-bills-text: #185FA5;
+  --pill-bills-border: #B5D4F4;
+  /* Category pill: Transport → blue */
+  --pill-transport-bg: #E6F1FB;
+  --pill-transport-text: #185FA5;
+  --pill-transport-border: #B5D4F4;
+  /* Category pill: Health → green-teal */
+  --pill-health-bg: #E0F5EE;
+  --pill-health-text: #0F6B4F;
+  --pill-health-border: #A4DCC8;
+  /* Category pill: Travel → amber */
+  --pill-travel-bg: #FAEEDA;
+  --pill-travel-text: #854F0B;
+  --pill-travel-border: #FAC775;
+  /* Category pill: Entertainment → purple */
+  --pill-entertainment-bg: #EEEDFE;
+  --pill-entertainment-text: #534AB7;
+  --pill-entertainment-border: #CECBF6;
+  /* Category pill: Income → green */
+  --pill-income-bg: #DEF3DE;
+  --pill-income-text: #1B6D1B;
+  --pill-income-border: #97DD97;
+  /* Category pill: Zelle → blue */
+  --pill-zelle-bg: #E6F1FB;
+  --pill-zelle-text: #185FA5;
+  --pill-zelle-border: #B5D4F4;
+  /* Category pill: Other → warm neutral */
+  --pill-other-bg: #F1EFE8;
+  --pill-other-text: #5F5E5A;
+  --pill-other-border: #D3D1C7;
+
+  /* Avatar colors by category */
+  --avatar-food: #4ade80;
+  --avatar-groceries: #4ade80;
+  --avatar-shopping: #fbbf24;
+  --avatar-subscriptions: #a78bfa;
+  --avatar-bills: #60a5fa;
+  --avatar-transport: #60a5fa;
+  --avatar-health: #34d399;
+  --avatar-travel: #fbbf24;
+  --avatar-entertainment: #a78bfa;
+  --avatar-income: #4ade80;
+  --avatar-zelle: #60a5fa;
+  --avatar-other: #a1a1aa;
+}
+
+.dark {
+  --chart-grid: #27272a;
+  --chart-axis: #52525b;
+  --chart-cursor: #27272a;
+
+  --color-amount-negative: #ef4444;
+  --color-amount-positive: #22c55e;
+
+  --color-surface-primary: #18181b;
+  --color-surface-hover: #27272a;
+  --color-border-row: #27272a;
+  --color-text-primary: #e4e4e7;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #71717a;
+
+  /* Dark mode pill overrides */
+  --pill-food-bg: #1a2e0d;
+  --pill-food-text: #a3d977;
+  --pill-food-border: #3B6D11;
+  --pill-groceries-bg: #1a2e0d;
+  --pill-groceries-text: #a3d977;
+  --pill-groceries-border: #3B6D11;
+  --pill-shopping-bg: #2e1f05;
+  --pill-shopping-text: #fac775;
+  --pill-shopping-border: #854F0B;
+  --pill-subscriptions-bg: #1e1b3a;
+  --pill-subscriptions-text: #b5b0f0;
+  --pill-subscriptions-border: #534AB7;
+  --pill-bills-bg: #0d1f33;
+  --pill-bills-text: #7cb8e8;
+  --pill-bills-border: #185FA5;
+  --pill-transport-bg: #0d1f33;
+  --pill-transport-text: #7cb8e8;
+  --pill-transport-border: #185FA5;
+  --pill-health-bg: #0d2e24;
+  --pill-health-text: #6ee7b7;
+  --pill-health-border: #0F6B4F;
+  --pill-travel-bg: #2e1f05;
+  --pill-travel-text: #fac775;
+  --pill-travel-border: #854F0B;
+  --pill-entertainment-bg: #1e1b3a;
+  --pill-entertainment-text: #b5b0f0;
+  --pill-entertainment-border: #534AB7;
+  --pill-income-bg: #0d2e0d;
+  --pill-income-text: #86efac;
+  --pill-income-border: #1B6D1B;
+  --pill-zelle-bg: #0d1f33;
+  --pill-zelle-text: #7cb8e8;
+  --pill-zelle-border: #185FA5;
+  --pill-other-bg: #3a3a38;
+  --pill-other-text: #c8c6bc;
+  --pill-other-border: #555552;
+
+  --avatar-zelle: #3b82f6;
+  --avatar-food: #22c55e;
+  --avatar-groceries: #22c55e;
+  --avatar-shopping: #f59e0b;
+  --avatar-subscriptions: #8b5cf6;
+  --avatar-bills: #3b82f6;
+  --avatar-transport: #3b82f6;
+  --avatar-health: #10b981;
+  --avatar-travel: #f59e0b;
+  --avatar-entertainment: #8b5cf6;
+  --avatar-income: #22c55e;
+  --avatar-other: #71717a;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-50 text-zinc-900;
+  }
+  .dark body {
+    @apply bg-zinc-950 text-zinc-300;
+  }
+  /* Remove focus ring on mouse/touch click — keep it for keyboard navigation */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* Radial category wheel — pulse ring on the active node */
+@keyframes wheel-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--pulse-color, rgba(255,255,255,0.2)); }
+  50% { box-shadow: 0 0 0 5px var(--pulse-color, rgba(255,255,255,0.05)); }
+}
