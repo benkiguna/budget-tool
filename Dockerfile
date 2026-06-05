@@ -10,9 +10,16 @@ RUN npm install
 
 COPY . .
 
-# VITE_API_TOKEN must be passed at build time so Vite bakes it into the bundle
+# These must be passed at build time so Vite bakes them into the bundle
 ARG VITE_API_TOKEN
+ARG VITE_GEMINI_API_KEY
+ARG VITE_TROVE_API_KEY
+ARG VITE_LOGO_API_KEY
+
 ENV VITE_API_TOKEN=$VITE_API_TOKEN
+ENV VITE_GEMINI_API_KEY=$VITE_GEMINI_API_KEY
+ENV VITE_TROVE_API_KEY=$VITE_TROVE_API_KEY
+ENV VITE_LOGO_API_KEY=$VITE_LOGO_API_KEY
 
 RUN npm run build
 
