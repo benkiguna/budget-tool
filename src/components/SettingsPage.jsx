@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import CategoryEditor from './CategoryEditor.jsx';
 import ImportAuditLog from './ImportAuditLog.jsx';
+import ConnectedAccounts from './ConnectedAccounts.jsx';
 import { CATEGORIES } from '../lib/categorizer.js';
 
 const BANKS = [
@@ -26,11 +27,12 @@ export default function SettingsPage({
   overrides, onUpdateOverride, onDeleteOverride,
   onIdentify, onAddCategory, onTransactionsChanged,
   activeTab: activeTabProp, onTabChange,
+  plaidItems, onPlaidRefresh,
 }) {
   const [localTab, setLocalTab] = useState('General');
   const activeTab = activeTabProp ?? localTab;
   const setActiveTab = onTabChange ?? setLocalTab;
-  const TABS = ['General', 'Budgets', 'Cards', 'AI', 'Rules', 'Imports'];
+  const TABS = ['General', 'Budgets', 'Cards', 'AI', 'Rules', 'Imports', 'Banks'];
 
   // General form
   const [generalForm, setGeneralForm] = useState({
@@ -329,6 +331,17 @@ export default function SettingsPage({
             Deleting an import removes all transactions tied to that file.
           </p>
           <ImportAuditLog onTransactionsChanged={onTransactionsChanged} />
+        </div>
+      )}
+
+      {/* Banks */}
+      {activeTab === 'Banks' && (
+        <div>
+          <p className="text-zinc-500 text-sm mb-5">
+            Connected banks sync automatically via Plaid. Up to 10 accounts on the Trial plan.
+            CSV import remains available for backfilling history older than Plaid's coverage window.
+          </p>
+          <ConnectedAccounts items={plaidItems ?? []} onRefresh={onPlaidRefresh} />
         </div>
       )}
     </div>

@@ -1,15 +1,13 @@
-import Database from 'better-sqlite3';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { createClient } from '@libsql/client';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const dbPath = process.env.DB_PATH || join(__dirname, '..', 'budget.db');
-const db = new Database(dbPath);
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL || 'file:budget.db',
+  authToken: process.env.TURSO_AUTH_TOKEN, // undefined in local dev (file mode)
+});
 
-db.pragma('journal_mode = WAL');
+// ── Schema + migrations ───────────────────────────────────────────────────────
 
-// Step 1: create tables without new columns (safe for existing DBs)
-db.exec(`
+await db.executeMultiple(`
   CREATE TABLE IF NOT EXISTS imports (
     id                  TEXT PRIMARY KEY,
     filename            TEXT,
@@ -28,16 +26,21 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS transactions (
-    id              TEXT PRIMARY KEY,
-    date            TEXT,
-    merchant        TEXT,
-    merchantRaw     TEXT,
-    amount          REAL,
-    category        TEXT,
-    categorySource  TEXT,
-    sourceBank      TEXT,
-    bankCategoryRaw TEXT,
-    notes           TEXT
+    id                  TEXT PRIMARY KEY,
+    date                TEXT,
+    merchant            TEXT,
+    merchantRaw         TEXT,
+    amount              REAL,
+    category            TEXT,
+    categorySource      TEXT,
+    sourceBank          TEXT,
+    bankCategoryRaw     TEXT,
+    notes               TEXT,
+    importId            TEXT,
+    plaid_transaction_id TEXT,
+    account_id          TEXT,
+    source              TEXT DEFAULT 'csv',
+    pending             INTEGER DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS overrides (
@@ -55,28 +58,35 @@ db.exec(`
     value TEXT
   );
 
+  CREATE TABLE IF NOT EXISTS plaid_items (
+    item_id          TEXT PRIMARY KEY,
+    institution_id   TEXT,
+    institution_name TEXT,
+    access_token     TEXT,
+    cursor           TEXT,
+    last_synced      TEXT,
+    earliest_date    TEXT,
+    error_code       TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS plaid_accounts (
+    account_id TEXT PRIMARY KEY,
+    item_id    TEXT REFERENCES plaid_items(item_id) ON DELETE CASCADE,
+    name       TEXT,
+    mask       TEXT,
+    type       TEXT,
+    subtype    TEXT,
+    enabled    INTEGER DEFAULT 1
+  );
+
   CREATE INDEX IF NOT EXISTS idx_txn_date     ON transactions(date);
   CREATE INDEX IF NOT EXISTS idx_txn_category ON transactions(category);
+  CREATE INDEX IF NOT EXISTS idx_txn_import   ON transactions(importId);
 `);
 
-// Step 2: migrations — add columns that may not exist in older DB files
-const txColumns = db.prepare('PRAGMA table_info(transactions)').all().map((r) => r.name);
-if (!txColumns.includes('importId')) {
-  db.exec('ALTER TABLE transactions ADD COLUMN importId TEXT');
-}
-
-const ovColumns = db.prepare('PRAGMA table_info(overrides)').all().map((r) => r.name);
-if (!ovColumns.includes('displayName')) {
-  db.exec('ALTER TABLE overrides ADD COLUMN displayName TEXT');
-}
-if (!ovColumns.includes('domain')) {
-  db.exec('ALTER TABLE overrides ADD COLUMN domain TEXT');
-}
-if (!ovColumns.includes('logo')) {
-  db.exec('ALTER TABLE overrides ADD COLUMN logo TEXT');
-}
-
-// Step 3: indexes that depend on migrated columns
-db.exec('CREATE INDEX IF NOT EXISTS idx_txn_import ON transactions(importId)');
+// Unique index needs separate statement (CREATE INDEX IF NOT EXISTS doesn't support WHERE in all libsql versions)
+await db.execute(
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_txn_plaid_id ON transactions(plaid_transaction_id) WHERE plaid_transaction_id IS NOT NULL`
+).catch(() => {}); // ignore if already exists
 
 export default db;

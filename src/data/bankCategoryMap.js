@@ -39,6 +39,23 @@ export const bankCategoryMap = {
   'fuel/automotive':      'Transport',
   'travel/entertainment': 'Travel',
   // Discover uses same 'restaurants' key as Chase — already mapped above
+
+  // Plaid personal_finance_category.primary values (lowercase)
+  'food_and_drink':              'Food',
+  'groceries':                   'Groceries',
+  'transportation':              'Transport',
+  'travel':                      'Travel',
+  'entertainment':               'Entertainment',
+  'general_merchandise':         'Shopping',
+  'home_improvement':            'Shopping',
+  'medical':                     'Health',
+  'personal_care':               'Health',
+  'rent_and_utilities':          'Bills',
+  'loan_payments':               'Bills',
+  'bank_fees':                   'Other',
+  'income':                      'Income',
+  'government_and_non_profit':   'Other',
+  'general_services':            'Other',
 };
 
 // Values that convey no useful information and should be ignored

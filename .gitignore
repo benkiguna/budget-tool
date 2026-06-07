@@ -28,3 +28,4 @@ budget.db
 budget.db-shm
 budget.db-wal
 .claude/
+.vercel

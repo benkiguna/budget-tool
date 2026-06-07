@@ -17,7 +17,7 @@ import GlobalSearch from './components/GlobalSearch.jsx';
 const TABS = ['Dashboard', 'Transactions', 'Enrich', 'Settings'];
 
 // Subtab display-name ↔ URL-key mappings
-const SETTINGS_SUBTABS = { general: 'General', budgets: 'Budgets', cards: 'Cards', ai: 'AI', rules: 'Rules', imports: 'Imports' };
+const SETTINGS_SUBTABS = { general: 'General', budgets: 'Budgets', cards: 'Cards', ai: 'AI', rules: 'Rules', imports: 'Imports', banks: 'Banks' };
 const SETTINGS_SUBTAB_KEYS = Object.fromEntries(Object.entries(SETTINGS_SUBTABS).map(([k, v]) => [v, k]));
 
 export default function App() {
@@ -47,6 +47,7 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [categoryDrawer, setCategoryDrawer] = useState(null); // category string or null
   const [troveProgress, setTroveProgress] = useState(null); // null | { done, total }
+  const [plaidItems, setPlaidItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -71,10 +72,14 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
+  const refreshPlaidItems = useCallback(() => {
+    storage.plaid.getItems().then(setPlaidItems).catch(() => {});
+  }, []);
+
   // Load from API on mount — applySync so displayName/domain from overrides are applied
   useEffect(() => {
-    Promise.all([storage.getTransactions(), storage.getOverrides(), storage.getSettings()])
-      .then(([txs, ovrs, stgs]) => {
+    Promise.all([storage.getTransactions(), storage.getOverrides(), storage.getSettings(), storage.plaid.getItems().catch(() => [])])
+      .then(([txs, ovrs, stgs, items]) => {
         // Migrate: old Trove enrichments stored domain: null — set sentinel so they aren't re-queued
         let migratedOvrs = ovrs;
         const needsMigration = Object.values(ovrs).some((v) => v.source === 'trove' && !v.domain);
@@ -90,8 +95,23 @@ export default function App() {
         setTransactions(applySync(txs, migratedOvrs));
         setOverrides(migratedOvrs);
         setSettings(stgs);
+        setPlaidItems(items);
         initialized.current = true;
         setLoading(false);
+
+        // Auto-sync Plaid items if any are connected and stale (> 1 hour)
+        if (items.length > 0) {
+          const stale = items.some((item) => {
+            if (!item.last_synced) return true;
+            return Date.now() - new Date(item.last_synced).getTime() > 60 * 60 * 1000;
+          });
+          if (stale) {
+            storage.plaid.sync().then(() => {
+              storage.getTransactions().then((fresh) => setTransactions(applySync(fresh, migratedOvrs)));
+              storage.plaid.getItems().then(setPlaidItems).catch(() => {});
+            }).catch(() => {});
+          }
+        }
       })
       .catch(() => setLoading(false));
   }, []);
@@ -517,7 +537,7 @@ export default function App() {
     setOverrideUndo(null);
     setDashboardMonth('');
     setTransactionsMonth('');
-    storage.clearAll();
+    storage.clearAll().then(() => refreshPlaidItems());
   }
 
   if (loading) {
@@ -550,6 +570,11 @@ export default function App() {
         onClose={() => setImportOpen(false)}
         onTransactions={handleNewTransactions}
         transactions={transactions}
+        plaidItems={plaidItems}
+        onPlaidConnected={() => {
+          refreshPlaidItems();
+          storage.getTransactions().then((txs) => setTransactions(applySync(txs, overrides)));
+        }}
       />
 
       {/* Nav */}
@@ -732,6 +757,11 @@ export default function App() {
             onTransactionsChanged={async () => {
               const txs = await storage.getTransactions();
               setTransactions(txs);
+            }}
+            plaidItems={plaidItems}
+            onPlaidRefresh={() => {
+              refreshPlaidItems();
+              storage.getTransactions().then((txs) => setTransactions(applySync(txs, overrides)));
             }}
           />
         )}
