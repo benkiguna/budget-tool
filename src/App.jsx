@@ -564,6 +564,7 @@ export default function App() {
         onClose={() => setCategoryDrawer(null)}
         onOverride={handleOverride}
         onMonthChange={setDashboardMonth}
+        onAddCategory={handleAddCategory}
       />
       <ImportSlideOver
         open={importOpen}

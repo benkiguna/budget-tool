@@ -269,7 +269,10 @@ function CategoryWheel({ categories, current, anchor, onSelect, onClose }) {
         const ly = cy + LABEL_RADIUS * Math.sin(angleRad);
         const isCurrent = cat === current;
         const isHov = hovered === cat;
-        const ps = pillStyle(cat);
+        const isNew = cat === '__new__';
+        const ps = isNew
+          ? { backgroundColor: 'rgba(99,102,241,0.15)', color: 'rgb(165,180,252)', borderColor: 'rgba(99,102,241,0.4)' }
+          : pillStyle(cat);
 
         // Open: forward stagger (0,1,2…). Close: reverse stagger (last→first).
         const openDelay = i * STAGGER;
@@ -330,7 +333,10 @@ function CategoryWheel({ categories, current, anchor, onSelect, onClose }) {
                 pointerEvents: closing ? 'none' : 'auto',
               }}
             >
-              <CategoryIcon category={cat} />
+              {isNew
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                : <CategoryIcon category={cat} />
+              }
             </button>
 
             {/* Label */}
@@ -365,7 +371,7 @@ function CategoryWheel({ categories, current, anchor, onSelect, onClose }) {
                 zIndex: isHov ? 10 : 1,
               }}
             >
-              {cat}
+              {isNew ? 'New category' : cat}
               {isCurrent && <span style={{ marginLeft: 4, fontSize: 8, opacity: 0.5 }}>●</span>}
             </div>
           </div>
@@ -447,7 +453,7 @@ function CategoryPill({ category, merchantRaw, onChange, customCategories = [], 
       </button>
       {wheelOpen && pillRef.current && (
         <CategoryWheel
-          categories={allCategories}
+          categories={[...allCategories, '__new__']}
           current={displayLabel}
           anchor={pillRef.current.getBoundingClientRect()}
           onSelect={handleWheelSelect}

@@ -58,6 +58,7 @@ export default function CategoryDrawer({
   onClose,
   onOverride,
   onMonthChange,
+  onAddCategory,
 }) {
   const isOpen = !!category;
   const [drawerMonth, setDrawerMonth] = useState(month);
@@ -327,6 +328,7 @@ export default function CategoryDrawer({
                         isEditing={editingTx === tx.id}
                         onToggleEdit={() => setEditingTx(editingTx === tx.id ? null : tx.id)}
                         onReassign={(cat) => handleReassign(tx.merchantRaw, cat)}
+                        onAddCategory={onAddCategory}
                         amountSign={-1}
                       />
                     ))}
@@ -350,6 +352,7 @@ export default function CategoryDrawer({
                         isEditing={editingTx === tx.id}
                         onToggleEdit={() => setEditingTx(editingTx === tx.id ? null : tx.id)}
                         onReassign={(cat) => handleReassign(tx.merchantRaw, cat)}
+                        onAddCategory={onAddCategory}
                         amountSign={1}
                       />
                     ))}
@@ -376,9 +379,11 @@ const SOURCE_BADGE = {
 };
 
 // ── Individual transaction row ──────────────────────────────────────────────────
-function TxRow({ tx, color, categories, isEditing, onToggleEdit, onReassign, amountSign }) {
+function TxRow({ tx, color, categories, isEditing, onToggleEdit, onReassign, onAddCategory, amountSign }) {
   const [localCat, setLocalCat] = useState(tx.category);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [addingNew, setAddingNew] = useState(false);
+  const [newCatInput, setNewCatInput] = useState('');
   const pickerBtnRef = useRef(null);
 
   useEffect(() => { setLocalCat(tx.category); }, [tx.category]);
@@ -425,7 +430,7 @@ function TxRow({ tx, color, categories, isEditing, onToggleEdit, onReassign, amo
         return (
           <div className="px-2.5 pb-2.5 flex items-center gap-2">
             <span className="text-xs text-zinc-500 shrink-0">Move to</span>
-            <button
+            {!addingNew && <button
               ref={pickerBtnRef}
               onClick={() => setPickerOpen((v) => !v)}
               className="flex-1 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-all hover:opacity-80"
@@ -439,12 +444,34 @@ function TxRow({ tx, color, categories, isEditing, onToggleEdit, onReassign, amo
               <svg style={{ width: 10, height: 10, opacity: 0.6, transform: pickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 140ms ease' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
+            </button>}
+            {addingNew && (
+              <input
+                autoFocus
+                className="flex-1 bg-zinc-100 dark:bg-zinc-700 border border-zinc-400 dark:border-zinc-600 rounded-full px-3 py-1 text-xs focus:outline-none"
+                style={{ color: 'var(--color-text-primary)' }}
+                placeholder="New category name…"
+                value={newCatInput}
+                onChange={(e) => setNewCatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const name = newCatInput.trim();
+                    if (name) { onAddCategory?.(name); setLocalCat(name); }
+                    setAddingNew(false); setNewCatInput('');
+                  }
+                  if (e.key === 'Escape') { setAddingNew(false); setNewCatInput(''); }
+                }}
+                onBlur={() => { setAddingNew(false); setNewCatInput(''); }}
+              />
+            )}
             {pickerOpen && pickerBtnRef.current && (
               <CategoryListPopover
-                options={categories.map((c) => ({ value: c, label: c }))}
+                options={[...categories.map((c) => ({ value: c, label: c })), { value: '__new__', label: '+ New category' }]}
                 value={localCat}
-                onChange={(cat) => { setLocalCat(cat); setPickerOpen(false); }}
+                onChange={(cat) => {
+                  if (cat === '__new__') { setPickerOpen(false); setAddingNew(true); }
+                  else { setLocalCat(cat); setPickerOpen(false); }
+                }}
                 onClose={() => setPickerOpen(false)}
                 anchor={pickerBtnRef.current.getBoundingClientRect()}
                 withIcons={true}
