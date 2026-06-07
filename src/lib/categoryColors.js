@@ -11,6 +11,8 @@ export const CATEGORY_COLORS = {
   Income:                '#4ade80',
   'Credit Card Payment': '#6366f1',
   Savings:               '#14b8a6',
+  Checking:              '#3b82f6',
+  Investment:            '#0891b2',
   Rent:                  '#f59e0b',
   'House Rent':          '#f59e0b',
   EMI:                   '#3b82f6',

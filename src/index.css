@@ -59,6 +59,10 @@
   --pill-income-bg: #DEF3DE;
   --pill-income-text: #1B6D1B;
   --pill-income-border: #97DD97;
+  /* Category pill: Investment → cyan */
+  --pill-investment-bg: #ecfeff;
+  --pill-investment-text: #164e63;
+  --pill-investment-border: #a5f3fc;
   /* Category pill: Zelle → blue */
   --pill-zelle-bg: #E6F1FB;
   --pill-zelle-text: #185FA5;
@@ -129,6 +133,9 @@
   --pill-income-bg: #0d2e0d;
   --pill-income-text: #86efac;
   --pill-income-border: #1B6D1B;
+  --pill-investment-bg: #061a22;
+  --pill-investment-text: #67e8f9;
+  --pill-investment-border: #164e63;
   --pill-zelle-bg: #0d1f33;
   --pill-zelle-text: #7cb8e8;
   --pill-zelle-border: #185FA5;

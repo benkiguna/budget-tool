@@ -10,7 +10,7 @@ export function pillKey(category) {
     health: 'health', travel: 'travel', entertainment: 'entertainment',
     income: 'income', zelle: 'zelle',
     creditcardpayment: 'bills', savings: 'bills', checking: 'bills',
-    houserent: 'bills', rent: 'bills',
+    investment: 'investment', houserent: 'bills', rent: 'bills',
   };
   return map[c] || 'other';
 }
@@ -51,6 +51,8 @@ export function CategoryIcon({ category, className = 'w-3.5 h-3.5' }) {
       return <svg {...props}><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M2 9h2m16 0h2M2 15h2m16 0h2"/></svg>;
     case 'zelle':
       return <svg {...props}><path d="M10 14L21 3m0 0l-6.5 18a.55.55 0 0 1-1 0L10 14l-7-3.5a.55.55 0 0 1 0-1L21 3"/></svg>;
+    case 'investment':
+      return <svg {...props}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>;
     case 'checking':
       return <svg {...props}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/><path d="M9 9h6"/></svg>;
     case 'house rent':

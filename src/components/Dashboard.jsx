@@ -18,30 +18,35 @@ function calcTotals(txs) {
   // savingsOut: checking → savings outflows (negative Savings txs)
   // checkingIn: savings → checking inflows (positive Checking txs) — money taken back out of savings
   // ccPayments: credit card payment debits
-  let savingsOut = 0, checkingIn = 0, ccPayments = 0;
+  let savingsOut = 0, checkingIn = 0, ccPayments = 0, investedOut = 0, investedIn = 0;
 
   for (const tx of txs) {
     const abs = Math.abs(tx.amount);
     if (tx.amount < 0) {
-      if (tx.category === 'Savings')              savingsOut += abs;
-      else if (tx.category === 'Checking')        savingsOut += abs; // negative Checking = unexpected outflow, treat as transfer
+      if (tx.category === 'Savings')                  savingsOut += abs;
+      else if (tx.category === 'Checking')            savingsOut += abs;
+      else if (tx.category === 'Investment')          investedOut += abs;
       else if (tx.category === 'Credit Card Payment') ccPayments += abs;
-      else                                        spend += abs;
+      else                                            spend += abs;
     } else {
-      if (tx.category === 'Income')               income += tx.amount;
-      else if (tx.category === 'Checking')        checkingIn += tx.amount; // money returned from savings to checking
-      else                                        refunds += tx.amount;
+      if (tx.category === 'Income')                   income += tx.amount;
+      else if (tx.category === 'Checking')            checkingIn += tx.amount;
+      else if (tx.category === 'Investment')          investedIn += tx.amount; // withdrawals / returns from investments
+      else                                            refunds += tx.amount;
     }
   }
 
-  // netSaved = money actually sitting in savings this period (gross outflows minus returned inflows)
   const netSaved = Math.max(0, savingsOut - checkingIn);
+  const netInvested = investedOut - investedIn; // positive = money still in market; negative = took profit
   return {
     spend: Math.max(0, spend - refunds),
     income,
-    transfers: ccPayments + savingsOut + checkingIn,
+    transfers: ccPayments + savingsOut + checkingIn + investedOut + investedIn,
     netSaved,
     ccPayments,
+    investedOut,
+    investedIn,
+    netInvested,
   };
 }
 
@@ -94,7 +99,7 @@ export default function Dashboard({
 
   const uncategorized = transactions.filter((tx) => tx.categorySource === 'uncategorized');
 
-  const { spend, income, transfers, netSaved, ccPayments } = calcTotals(filtered);
+  const { spend, income, transfers, netSaved, ccPayments, investedOut, investedIn, netInvested } = calcTotals(filtered);
   const salaryIncome = salary > 0 ? salary : income;
   const surplus = salaryIncome - spend;
   // Use actual savings transfers if detected, otherwise fall back to implied surplus
@@ -169,6 +174,51 @@ export default function Dashboard({
           />
         </div>
       </div>
+
+      {/* Investment strip — shown when investment transactions exist */}
+      {investedOut > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
+          className="flex flex-wrap items-center gap-4 bg-cyan-50 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-800/40 rounded-xl px-4 py-3"
+        >
+          <div className="flex items-center gap-2 shrink-0">
+            <svg className="w-4 h-4 text-cyan-600 dark:text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
+            </svg>
+            <span className="text-cyan-700 dark:text-cyan-400 text-sm font-semibold">Investments</span>
+          </div>
+          <div className="flex flex-wrap gap-5">
+            <div>
+              <p className="text-xs text-cyan-600/70 dark:text-cyan-500/70 mb-0.5">Deposited</p>
+              <p className="text-sm font-semibold text-cyan-700 dark:text-cyan-300 tabular-nums">{formatCurrency(investedOut)}</p>
+            </div>
+            {investedIn > 0 && (
+              <div>
+                <p className="text-xs text-cyan-600/70 dark:text-cyan-500/70 mb-0.5">Withdrawn</p>
+                <p className="text-sm font-semibold text-cyan-700 dark:text-cyan-300 tabular-nums">{formatCurrency(investedIn)}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-cyan-600/70 dark:text-cyan-500/70 mb-0.5">Net invested</p>
+              <p className={`text-sm font-semibold tabular-nums ${netInvested >= 0 ? 'text-cyan-700 dark:text-cyan-300' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                {netInvested >= 0 ? formatCurrency(netInvested) : `+${formatCurrency(Math.abs(netInvested))} returned`}
+              </p>
+            </div>
+            {income > 0 && (
+              <div>
+                <p className="text-xs text-cyan-600/70 dark:text-cyan-500/70 mb-0.5">Investment rate</p>
+                <p className="text-sm font-semibold text-cyan-700 dark:text-cyan-300 tabular-nums">
+                  {((investedOut / income) * 100).toFixed(1)}%
+                  <span className="text-xs font-normal ml-1 opacity-60">of income</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Zone 2 — Main charts */}
       <motion.div

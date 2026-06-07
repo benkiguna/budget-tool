@@ -3,6 +3,17 @@
 // ORDER MATTERS — more specific patterns (e.g. "UBER EATS") must precede broader ones (e.g. "UBER").
 
 export const keywordRules = [
+  // Investment transfers — must be before any broad patterns
+  { pattern: 'ROBINHOOD',           category: 'Investment' },
+  { pattern: 'FIDELITY',            category: 'Investment' },
+  { pattern: 'SCHWAB',              category: 'Investment' },
+  { pattern: 'VANGUARD',            category: 'Investment' },
+  { pattern: 'TD AMERITRADE',       category: 'Investment' },
+  { pattern: 'ETRADE',              category: 'Investment' },
+  { pattern: 'WEBULL',              category: 'Investment' },
+  { pattern: 'COINBASE',            category: 'Investment' },
+  { pattern: 'ACATS',               category: 'Investment' },
+
   // Credit Card Payments — must be before any broad patterns
   { pattern: 'PAYMENT THANK YOU',     category: 'Credit Card Payment' },
   { pattern: 'AUTOPAY PAYMENT',       category: 'Credit Card Payment' },
