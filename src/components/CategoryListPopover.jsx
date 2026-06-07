@@ -54,7 +54,7 @@ export function CategoryIcon({ category, className = 'w-3.5 h-3.5' }) {
     case 'investment':
       return <svg {...props}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>;
     case 'savings':
-      return <svg {...props}><path d="M19 9c0-3.87-3.13-7-7-7S5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17h8v-2.26C17.81 13.47 19 11.38 19 9z"/><path d="M9 17h6v2H9z"/><circle cx="15" cy="8.5" r=".75" fill="currentColor" stroke="none"/><path d="M19 9h2.5"/></svg>;
+      return <svg {...props}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>;
     case 'checking':
       return <svg {...props}><path d="M2 20h20M4 20V10M8 20V10M12 20V10M16 20V10M20 20V10M2 7l10-5 10 5"/></svg>;
     case 'house rent':

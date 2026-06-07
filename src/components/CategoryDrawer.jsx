@@ -6,7 +6,7 @@ import {
   X, ChevronLeft, ChevronRight,
   UtensilsCrossed, ShoppingCart, Car, ShoppingBag, Tv2, Zap,
   HeartPulse, Plane, Clapperboard, TrendingUp, Package2,
-  CreditCard, PiggyBank, Home, Landmark, Building2, LineChart,
+  CreditCard, Wallet, Home, Landmark, Building2, LineChart,
 } from 'lucide-react';
 
 const CATEGORY_ICONS = {
@@ -22,7 +22,7 @@ const CATEGORY_ICONS = {
   Income:                TrendingUp,
   Other:                 Package2,
   'Credit Card Payment': CreditCard,
-  Savings:               PiggyBank,
+  Savings:               Wallet,
   Checking:              Building2,
   Investment:            LineChart,
   Rent:                  Home,
