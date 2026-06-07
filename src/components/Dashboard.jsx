@@ -14,19 +14,35 @@ import { TRANSFER_CATEGORIES } from '../lib/categorizer.js';
 import { unmatchedTransferCount } from '../lib/transferPairing.js';
 
 function calcTotals(txs) {
-  let spend = 0, income = 0, transfers = 0, refunds = 0;
+  let spend = 0, income = 0, refunds = 0;
+  // savingsOut: checking → savings outflows (negative Savings txs)
+  // checkingIn: savings → checking inflows (positive Checking txs) — money taken back out of savings
+  // ccPayments: credit card payment debits
+  let savingsOut = 0, checkingIn = 0, ccPayments = 0;
+
   for (const tx of txs) {
+    const abs = Math.abs(tx.amount);
     if (tx.amount < 0) {
-      if (TRANSFER_CATEGORIES.has(tx.category)) transfers += Math.abs(tx.amount);
-      else spend += Math.abs(tx.amount);
-    } else if (tx.category === 'Income') {
-      income += tx.amount;
+      if (tx.category === 'Savings')              savingsOut += abs;
+      else if (tx.category === 'Checking')        savingsOut += abs; // negative Checking = unexpected outflow, treat as transfer
+      else if (tx.category === 'Credit Card Payment') ccPayments += abs;
+      else                                        spend += abs;
     } else {
-      // Positive amount that isn't Income = refund/cashback — reduces net spend
-      refunds += tx.amount;
+      if (tx.category === 'Income')               income += tx.amount;
+      else if (tx.category === 'Checking')        checkingIn += tx.amount; // money returned from savings to checking
+      else                                        refunds += tx.amount;
     }
   }
-  return { spend: Math.max(0, spend - refunds), income, transfers };
+
+  // netSaved = money actually sitting in savings this period (gross outflows minus returned inflows)
+  const netSaved = Math.max(0, savingsOut - checkingIn);
+  return {
+    spend: Math.max(0, spend - refunds),
+    income,
+    transfers: ccPayments + savingsOut + checkingIn,
+    netSaved,
+    ccPayments,
+  };
 }
 
 function trend(current, previous) {
@@ -78,9 +94,12 @@ export default function Dashboard({
 
   const uncategorized = transactions.filter((tx) => tx.categorySource === 'uncategorized');
 
-  const { spend, income, transfers } = calcTotals(filtered);
+  const { spend, income, transfers, netSaved, ccPayments } = calcTotals(filtered);
   const salaryIncome = salary > 0 ? salary : income;
   const surplus = salaryIncome - spend;
+  // Use actual savings transfers if detected, otherwise fall back to implied surplus
+  const savingsAmount = netSaved > 0 ? netSaved : Math.max(0, surplus);
+  const savingsRate = salaryIncome > 0 ? (savingsAmount / salaryIncome) * 100 : 0;
 
   const prevMonth = isYearMode
     ? String(parseInt(selectedMonth, 10) - 1)
@@ -130,12 +149,12 @@ export default function Dashboard({
           />
           <SummaryCard
             label={surplus >= 0 ? 'Savings Rate' : 'Deficit'}
-            value={salaryIncome > 0 ? Math.abs((surplus / salaryIncome) * 100) : Math.abs(surplus)}
+            value={salaryIncome > 0 ? savingsRate : Math.abs(surplus)}
             format={salaryIncome > 0 ? (v) => `${v.toFixed(1)}%` : fmt}
             color={surplus >= 0 ? '#10b981' : '#f43f5e'}
             delay={0.06}
             sub={salaryIncome > 0
-              ? `${formatCurrency(Math.abs(surplus))} ${surplus >= 0 ? 'saved' : 'over budget'}`
+              ? `${formatCurrency(savingsAmount)} ${netSaved > 0 ? 'to savings' : surplus >= 0 ? 'surplus' : 'over budget'}`
               : undefined}
           />
           <SummaryCard
@@ -144,7 +163,9 @@ export default function Dashboard({
             format={fmt}
             color="#71717a"
             delay={0.12}
-            sub="card payments + savings"
+            sub={ccPayments > 0
+              ? `${formatCurrency(ccPayments)} card pmts`
+              : 'excl. from spend'}
           />
         </div>
       </div>

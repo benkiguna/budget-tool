@@ -16,12 +16,25 @@ export const keywordRules = [
   { pattern: 'BANK OF AMERICA PMT',   category: 'Credit Card Payment' },
   { pattern: 'ONLINE PMT',            category: 'Credit Card Payment' },
 
-  // Savings Transfers — must be before broad transfer patterns
+  // Checking inflows (savings → checking) — before Savings patterns
+  { pattern: 'TRANSFER FROM SAV',     category: 'Checking' },
+  { pattern: 'FROM SAVINGS',          category: 'Checking' },
+  { pattern: 'ONLINE TRANSFER FROM',  category: 'Checking' },
+  { pattern: 'TRANSFER FROM CHK',     category: 'Checking' },
+  { pattern: 'TRANSFER FROM CHECK',   category: 'Checking' },
+
+  // Savings Transfers (checking → savings) — must be before broad transfer patterns
   { pattern: 'TRANSFER TO SAV',       category: 'Savings' },
   { pattern: 'TO SAVINGS',            category: 'Savings' },
   { pattern: 'SAVINGS TRANSFER',      category: 'Savings' },
   { pattern: 'TRANSFER SAVINGS',      category: 'Savings' },
   { pattern: 'ONLINE TRANSFER TO',    category: 'Savings' },
+
+  // House Rent
+  { pattern: 'HOUSE RENT',            category: 'House Rent' },
+  { pattern: 'RENT PAYMENT',          category: 'House Rent' },
+  { pattern: 'MONTHLY RENT',          category: 'House Rent' },
+  { pattern: 'RENT TRANSFER',         category: 'House Rent' },
 
   // Groceries
   { pattern: 'WHOLEFDS',     category: 'Groceries' },

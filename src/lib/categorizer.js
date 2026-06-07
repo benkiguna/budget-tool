@@ -5,11 +5,12 @@ import { normalizeForKeyword } from './utils.js';
 export const CATEGORIES = [
   'Food', 'Groceries', 'Transport', 'Shopping', 'Subscriptions',
   'Bills', 'Health', 'Travel', 'Entertainment', 'Income',
-  'Credit Card Payment', 'Savings', 'Other',
+  'Credit Card Payment', 'Savings', 'Checking', 'House Rent', 'Other',
 ];
 
 // These are internal money movements — excluded from spend totals in the dashboard.
-export const TRANSFER_CATEGORIES = new Set(['Savings', 'Credit Card Payment']);
+// Checking = transfers between checking and savings accounts (both directions).
+export const TRANSFER_CATEGORIES = new Set(['Savings', 'Checking', 'Credit Card Payment']);
 
 // Returns built-in categories merged with any user-defined custom ones.
 export function getCategories(customCategories = []) {

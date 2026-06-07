@@ -56,6 +56,9 @@ export const bankCategoryMap = {
   'income':                      'Income',
   'government_and_non_profit':   'Other',
   'general_services':            'Other',
+  // Plaid transfer categories
+  'transfer_in':                 'Checking',
+  'transfer_out':                'Savings',
 };
 
 // Values that convey no useful information and should be ignored
