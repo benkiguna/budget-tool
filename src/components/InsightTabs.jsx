@@ -9,6 +9,7 @@ import DuplicateCharges from './DuplicateCharges.jsx';
 import PriceCreep from './PriceCreep.jsx';
 import TransferPairing from './TransferPairing.jsx';
 import { unmatchedTransferCount } from '../lib/transferPairing.js';
+import PLStatement from './PLStatement.jsx';
 
 function anomalyCount(transactions) {
   let count = 0;
@@ -40,7 +41,7 @@ function anomalyCount(transactions) {
   return count;
 }
 
-const TABS = ['Overview', 'Cards', 'Anomalies'];
+const TABS = ['Overview', 'P&L', 'Cards', 'Anomalies'];
 
 export default function InsightTabs({ transactions, filtered, selectedMonth, settings, onCategoryClick, activeTab, onTabChange }) {
   const [internalTab, setInternalTab] = useState('Overview');
@@ -111,6 +112,10 @@ export default function InsightTabs({ transactions, filtered, selectedMonth, set
                 </div>
                 <CategoryDelta transactions={transactions} selectedMonth={selectedMonth} onCategoryClick={onCategoryClick} />
               </div>
+            )}
+
+            {active === 'P&L' && (
+              <PLStatement transactions={transactions} selectedMonth={selectedMonth} />
             )}
 
             {active === 'Cards' && (

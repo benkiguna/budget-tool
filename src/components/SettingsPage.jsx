@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import CategoryEditor from './CategoryEditor.jsx';
+import RulesEditor from './RulesEditor.jsx';
 import ImportAuditLog from './ImportAuditLog.jsx';
 import ConnectedAccounts from './ConnectedAccounts.jsx';
 import { CATEGORIES } from '../lib/categorizer.js';
@@ -28,6 +29,7 @@ export default function SettingsPage({
   onIdentify, onAddCategory, onTransactionsChanged,
   activeTab: activeTabProp, onTabChange,
   plaidItems, onPlaidRefresh,
+  rules = [], onCreateRule, onDeleteRule,
 }) {
   const [localTab, setLocalTab] = useState('General');
   const activeTab = activeTabProp ?? localTab;
@@ -309,16 +311,24 @@ export default function SettingsPage({
 
       {/* Rules */}
       {activeTab === 'Rules' && (
-        <div>
-          <p className="text-zinc-500 text-sm mb-5">Merchant overrides applied during categorization. AI-learned rules are shown here and can be corrected.</p>
-          <CategoryEditor
-            overrides={overrides}
-            onUpdate={onUpdateOverride}
-            onDelete={onDeleteOverride}
+        <div className="space-y-6">
+          <div>
+            <p className="text-zinc-500 text-sm mb-3">Merchant overrides — per-merchant category assignments from manual, AI, or Trove sources.</p>
+            <CategoryEditor
+              overrides={overrides}
+              onUpdate={onUpdateOverride}
+              onDelete={onDeleteOverride}
+              customCategories={settings.categories ?? []}
+              onIdentify={onIdentify}
+              geminiModel={settings.geminiModel}
+              onAddCategory={onAddCategory}
+            />
+          </div>
+          <RulesEditor
+            rules={rules}
+            onCreateRule={onCreateRule}
+            onDeleteRule={onDeleteRule}
             customCategories={settings.categories ?? []}
-            onIdentify={onIdentify}
-            geminiModel={settings.geminiModel}
-            onAddCategory={onAddCategory}
           />
         </div>
       )}

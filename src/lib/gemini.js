@@ -265,7 +265,8 @@ Rules:
 - Salary/payroll deposits → Income
 - When ambiguous, prefer the more specific category
 - Return ONLY a JSON object where each key is EXACTLY the merchant name from the list below
-- Each value should be an object with: { "category": "CategoryName", "displayName": "Clean Name", "description": "brief description" }
+- Each value should be an object with: { "category": "CategoryName", "confidence": 0.0-1.0, "displayName": "Clean Name", "description": "brief description" }
+- confidence = how certain you are (0.0–1.0). Use 0.9+ for well-known merchants, 0.7–0.89 for likely matches, 0.5–0.69 for ambiguous
 - displayName = the clean, human-readable business name (e.g. "STRBCKS 04821" → "Starbucks")
 - No explanation, no markdown, just the JSON object
 
@@ -297,9 +298,13 @@ ${merchantNames.join('\n')}`.trim();
     const isObj = typeof entry === 'object';
     const category = isObj ? entry.category : entry;
     if (category && CATEGORIES.includes(category)) {
+      // Clamp confidence to 0–1 range; default to 0.75 if not provided
+      const rawConf = isObj && typeof entry.confidence === 'number' ? entry.confidence : 0.75;
+      const confidence = Math.min(1, Math.max(0, rawConf));
       newOverrides[merchantRaw] = {
         category,
         source: 'ai',
+        confidence,
         savedAt: now,
         ...(isObj && entry.displayName ? { displayName: entry.displayName } : {}),
         ...(isObj && entry.description ? { description: entry.description } : {}),

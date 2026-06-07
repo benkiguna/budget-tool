@@ -89,4 +89,53 @@ await db.execute(
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_txn_plaid_id ON transactions(plaid_transaction_id) WHERE plaid_transaction_id IS NOT NULL`
 ).catch(() => {}); // ignore if already exists
 
+// ── Phase 3 migration: categorization rules ──────────────────────────────────
+await db.executeMultiple(`
+  CREATE TABLE IF NOT EXISTS categorization_rules (
+    id           TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
+    priority     INTEGER NOT NULL DEFAULT 100,
+    rule_type    TEXT NOT NULL,
+    match_value  TEXT,
+    amount_min   REAL,
+    amount_max   REAL,
+    category     TEXT NOT NULL,
+    created_from TEXT DEFAULT 'USER_MANUAL',
+    hit_count    INTEGER DEFAULT 0,
+    created_at   TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_rules_priority ON categorization_rules(priority);
+`).catch(() => {});
+
+// ── Phase 2 migration: categorization audit log ──────────────────────────────
+await db.executeMultiple(`
+  CREATE TABLE IF NOT EXISTS categorization_audit (
+    id             TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
+    transaction_id TEXT NOT NULL,
+    layer          TEXT NOT NULL,
+    input_snapshot TEXT,
+    output         TEXT,
+    confidence     REAL,
+    duration_ms    INTEGER,
+    created_at     TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_audit_txn ON categorization_audit(transaction_id);
+`).catch(() => {});
+
+// ── Phase 1 migrations: financial domain model fields ────────────────────────
+// ALTER TABLE is idempotent via .catch(() => {}) — safe to run on every startup.
+const p1Columns = [
+  `ALTER TABLE transactions ADD COLUMN transactionType TEXT`,
+  `ALTER TABLE transactions ADD COLUMN pnlImpact INTEGER`,
+  `ALTER TABLE transactions ADD COLUMN confidence REAL`,
+  `ALTER TABLE transactions ADD COLUMN categoryReason TEXT`,
+];
+for (const sql of p1Columns) {
+  await db.execute(sql).catch(() => {}); // no-op if column already exists
+}
+
+// Index for pnl-filtered queries (spend reports, P&L pages)
+await db.execute(
+  `CREATE INDEX IF NOT EXISTS idx_txn_pnl ON transactions(pnlImpact, date)`
+).catch(() => {});
+
 export default db;

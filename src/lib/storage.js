@@ -60,6 +60,15 @@ export const storage = {
 
   clearAll: () => apiFetch('/data', { method: 'DELETE' }),
 
+  // ── Categorization Rules ───────────────────────────────────────────────────
+
+  getRules: () => apiFetch('/rules'),
+
+  createRule: (rule) =>
+    apiFetch('/rules', { method: 'POST', body: JSON.stringify(rule) }),
+
+  deleteRule: (id) => apiFetch(`/rules/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
   // ── Plaid ─────────────────────────────────────────────────────────────────
 
   plaid: {

@@ -5,10 +5,11 @@ import SpendDonut from './SpendDonut.jsx';
 import TrendChart from './TrendChart.jsx';
 import SpendPace from './SpendPace.jsx';
 import InsightTabs from './InsightTabs.jsx';
-import UnresolvedMerchants from './UnresolvedMerchants.jsx';
+import ReviewQueue from './ReviewQueue.jsx';
 import TopMerchants from './TopMerchants.jsx';
 import RecurringCharges from './RecurringCharges.jsx';
 import PeriodNavigator from './PeriodNavigator.jsx';
+import BudgetProgress from './BudgetProgress.jsx';
 import { formatCurrency } from '../lib/utils.js';
 import { TRANSFER_CATEGORIES } from '../lib/categorizer.js';
 import { unmatchedTransferCount } from '../lib/transferPairing.js';
@@ -59,7 +60,7 @@ const fmt = (v) => formatCurrency(v);
 
 export default function Dashboard({
   transactions, overrides, settings, selectedMonth,
-  onOverride, onMonthChange, onIdentifyMerchant, onAddCategory, onCategoryClick,
+  onOverride, onMonthChange, onIdentifyMerchant, onAddCategory, onCategoryClick, onCreateRule,
 }) {
   const salary = settings.salary || 0;
   const [insightTab, setInsightTab] = useState('Overview');
@@ -97,7 +98,16 @@ export default function Dashboard({
     ? transactions.filter((tx) => tx.date?.startsWith(selectedMonth))
     : transactions;
 
-  const uncategorized = transactions.filter((tx) => tx.categorySource === 'uncategorized');
+  const reviewCount = useMemo(() => {
+    const seen = new Set();
+    return transactions.filter((tx) => {
+      if (tx.categorySource === 'user') return false;
+      const needsReview = tx.categorySource === 'uncategorized' || (tx.confidence != null && tx.confidence < 0.65);
+      if (!needsReview || seen.has(tx.merchantRaw)) return false;
+      seen.add(tx.merchantRaw);
+      return true;
+    }).length;
+  }, [transactions]);
 
   const { spend, income, transfers, netSaved, ccPayments, investedOut, investedIn, netInvested } = calcTotals(filtered);
   const salaryIncome = salary > 0 ? salary : income;
@@ -121,15 +131,15 @@ export default function Dashboard({
   return (
     <div className="space-y-5">
 
-      {/* Unresolved banner */}
-      {uncategorized.length > 0 && (
-        <UnresolvedMerchants
-          transactions={uncategorized}
+      {/* Review queue — uncategorized + low-confidence merchants */}
+      {reviewCount > 0 && (
+        <ReviewQueue
+          transactions={transactions}
+          settings={settings}
           onOverride={onOverride}
-          onIdentify={onIdentifyMerchant}
-          geminiModel={settings.geminiModel}
-          customCategories={settings.categories}
+          onIdentifyMerchant={onIdentifyMerchant}
           onAddCategory={onAddCategory}
+          onCreateRule={onCreateRule}
         />
       )}
 
@@ -218,6 +228,15 @@ export default function Dashboard({
             )}
           </div>
         </motion.div>
+      )}
+
+      {/* Budget progress — shown when any budgets are configured */}
+      {Object.keys(settings.categoryBudgets ?? {}).length > 0 && (
+        <BudgetProgress
+          transactions={filtered}
+          settings={settings}
+          selectedMonth={selectedMonth}
+        />
       )}
 
       {/* Zone 2 — Main charts */}

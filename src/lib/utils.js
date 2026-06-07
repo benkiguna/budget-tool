@@ -109,6 +109,27 @@ export function fmtDatetime(iso) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
+// ── CSV export ───────────────────────────────────────────────────────────────
+// Converts an array of transactions to a CSV string and triggers a download.
+export function exportTransactionsCSV(transactions, filename = 'transactions.csv') {
+  const COLS = ['date', 'merchant', 'merchantRaw', 'amount', 'category', 'categorySource', 'confidence', 'transactionType', 'notes'];
+  const header = COLS.join(',');
+  const escape = (v) => {
+    if (v == null) return '';
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = transactions.map((tx) => COLS.map((c) => escape(tx[c])).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Date parsing helpers ─────────────────────────────────────────────────────
 // Attempts to parse M/D/YYYY or YYYY-MM-DD → ISO YYYY-MM-DD
 export function parseDate(raw) {

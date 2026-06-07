@@ -51,14 +51,16 @@ app.put('/api/transactions', async (req, res) => {
   for (const tx of transactions) {
     stmts.push({
       sql: `INSERT OR REPLACE INTO transactions
-              (id, date, merchant, merchantRaw, amount, category, categorySource, sourceBank, bankCategoryRaw, notes, importId, plaid_transaction_id, account_id, source, pending)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+              (id, date, merchant, merchantRaw, amount, category, categorySource, sourceBank, bankCategoryRaw, notes, importId, plaid_transaction_id, account_id, source, pending, transactionType, pnlImpact, confidence, categoryReason)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       args: [
         tx.id, tx.date, tx.merchant, tx.merchantRaw, tx.amount,
         tx.category, tx.categorySource, tx.sourceBank,
         tx._bankCategoryRaw ?? '', tx.notes ?? null, tx.importId ?? null,
         tx.plaid_transaction_id ?? null, tx.account_id ?? null,
         tx.source ?? 'csv', tx.pending ?? 0,
+        tx.transactionType ?? null, tx.pnlImpact != null ? (tx.pnlImpact ? 1 : 0) : null,
+        tx.confidence ?? null, tx.categoryReason ?? null,
       ],
     });
   }
@@ -72,14 +74,16 @@ app.post('/api/transactions/batch', async (req, res) => {
 
   const stmts = transactions.map((tx) => ({
     sql: `INSERT OR IGNORE INTO transactions
-            (id, date, merchant, merchantRaw, amount, category, categorySource, sourceBank, bankCategoryRaw, notes, importId, plaid_transaction_id, account_id, source, pending)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            (id, date, merchant, merchantRaw, amount, category, categorySource, sourceBank, bankCategoryRaw, notes, importId, plaid_transaction_id, account_id, source, pending, transactionType, pnlImpact, confidence, categoryReason)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     args: [
       tx.id, tx.date, tx.merchant, tx.merchantRaw, tx.amount,
       tx.category, tx.categorySource, tx.sourceBank,
       tx._bankCategoryRaw ?? '', tx.notes ?? null, importId ?? null,
       tx.plaid_transaction_id ?? null, tx.account_id ?? null,
       tx.source ?? 'csv', tx.pending ?? 0,
+      tx.transactionType ?? null, tx.pnlImpact != null ? (tx.pnlImpact ? 1 : 0) : null,
+      tx.confidence ?? null, tx.categoryReason ?? null,
     ],
   }));
 
@@ -195,6 +199,35 @@ app.put('/api/settings', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Categorization Rules ──────────────────────────────────────────────────────
+
+app.get('/api/rules', async (_req, res) => {
+  const { rows } = await db.execute('SELECT * FROM categorization_rules ORDER BY priority ASC, created_at ASC');
+  res.json(rows);
+});
+
+app.post('/api/rules', async (req, res) => {
+  const { priority = 100, rule_type, match_value, amount_min, amount_max, category, created_from = 'USER_MANUAL' } = req.body;
+  if (!rule_type || !category) return res.status(400).json({ error: 'rule_type and category are required' });
+  const { rows } = await db.execute({
+    sql: `INSERT INTO categorization_rules (priority, rule_type, match_value, amount_min, amount_max, category, created_from)
+          VALUES (?,?,?,?,?,?,?) RETURNING id`,
+    args: [priority, rule_type, match_value ?? null, amount_min ?? null, amount_max ?? null, category, created_from],
+  });
+  res.json({ ok: true, id: rows[0]?.id });
+});
+
+app.delete('/api/rules/:id', async (req, res) => {
+  await db.execute({ sql: 'DELETE FROM categorization_rules WHERE id = ?', args: [req.params.id] });
+  res.json({ ok: true });
+});
+
+app.patch('/api/rules/:id/hit', async (_req, res) => {
+  const { id } = _req.params;
+  await db.execute({ sql: 'UPDATE categorization_rules SET hit_count = hit_count + 1 WHERE id = ?', args: [id] });
+  res.json({ ok: true });
+});
+
 // ── Clear all ─────────────────────────────────────────────────────────────────
 
 app.delete('/api/data', async (_req, res) => {
@@ -203,6 +236,7 @@ app.delete('/api/data', async (_req, res) => {
     { sql: 'DELETE FROM overrides', args: [] },
     { sql: 'DELETE FROM settings', args: [] },
     { sql: 'DELETE FROM imports', args: [] },
+    { sql: 'DELETE FROM categorization_rules', args: [] },
     { sql: 'UPDATE plaid_items SET cursor = NULL, earliest_date = NULL, last_synced = NULL', args: [] },
   ], 'write');
   res.json({ ok: true });

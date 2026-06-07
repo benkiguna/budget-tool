@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from './lib/router.js';
 import { storage } from './lib/storage.js';
-import { applySync } from './lib/categorizer.js';
+import { applySync as _applySync } from './lib/categorizer.js';
 import { categorizeMerchants, testGeminiKey, fetchModels, identifyMerchant } from './lib/gemini.js';
 import { enrichWithTrove, enrichOne } from './lib/trove.js';
 import Dashboard from './components/Dashboard.jsx';
@@ -47,6 +47,13 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [categoryDrawer, setCategoryDrawer] = useState(null); // category string or null
   const [troveProgress, setTroveProgress] = useState(null); // null | { done, total }
+  const [rules, setRules] = useState([]);
+  const rulesRef = useRef([]);
+  // Keep ref in sync so callbacks never see stale rules
+  useEffect(() => { rulesRef.current = rules; }, [rules]);
+  // Wrapper around _applySync that always uses latest rules from ref
+  const applySync = useCallback((txs, ovrs) => _applySync(txs, ovrs, rulesRef.current), []);
+
   const [plaidItems, setPlaidItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dark, setDark] = useState(() => {
@@ -78,8 +85,8 @@ export default function App() {
 
   // Load from API on mount — applySync so displayName/domain from overrides are applied
   useEffect(() => {
-    Promise.all([storage.getTransactions(), storage.getOverrides(), storage.getSettings(), storage.plaid.getItems().catch(() => [])])
-      .then(([txs, ovrs, stgs, items]) => {
+    Promise.all([storage.getTransactions(), storage.getOverrides(), storage.getSettings(), storage.plaid.getItems().catch(() => []), storage.getRules().catch(() => [])])
+      .then(([txs, ovrs, stgs, items, loadedRules]) => {
         // Migrate: old Trove enrichments stored domain: null — set sentinel so they aren't re-queued
         let migratedOvrs = ovrs;
         const needsMigration = Object.values(ovrs).some((v) => v.source === 'trove' && !v.domain);
@@ -92,7 +99,9 @@ export default function App() {
           );
           storage.setOverrides(migratedOvrs).catch(() => {});
         }
-        setTransactions(applySync(txs, migratedOvrs));
+        rulesRef.current = loadedRules;
+        setRules(loadedRules);
+        setTransactions(_applySync(txs, migratedOvrs, loadedRules));
         setOverrides(migratedOvrs);
         setSettings(stgs);
         setPlaidItems(items);
@@ -530,6 +539,25 @@ export default function App() {
     handleSaveSettings({ aiUsage });
   }
 
+  async function handleCreateRule(rule) {
+    try {
+      const { id } = await storage.createRule(rule);
+      const newRule = { ...rule, id, hit_count: 0, created_at: new Date().toISOString() };
+      const updated = [...rules, newRule];
+      setRules(updated);
+      setTransactions((prev) => applySync(prev, overrides));
+    } catch (e) {
+      console.error('createRule failed:', e);
+    }
+  }
+
+  async function handleDeleteRule(id) {
+    await storage.deleteRule(id).catch(() => {});
+    const updated = rules.filter((r) => r.id !== id);
+    setRules(updated);
+    setTransactions((prev) => applySync(prev, overrides));
+  }
+
   function handleClearData() {
     setTransactions([]);
     setOverrides({});
@@ -704,6 +732,7 @@ export default function App() {
             onIdentifyMerchant={(merchantRaw) => identifyMerchant(merchantRaw, settings.geminiModel)}
             onAddCategory={handleAddCategory}
             onCategoryClick={setCategoryDrawer}
+            onCreateRule={handleCreateRule}
           />
         )}
 
@@ -764,6 +793,9 @@ export default function App() {
               refreshPlaidItems();
               storage.getTransactions().then((txs) => setTransactions(applySync(txs, overrides)));
             }}
+            rules={rules}
+            onCreateRule={handleCreateRule}
+            onDeleteRule={handleDeleteRule}
           />
         )}
       </main>
