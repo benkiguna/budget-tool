@@ -575,8 +575,8 @@ export default function TransactionTable({ transactions, overrides, onOverride, 
     if (filterBank && tx.sourceBank !== filterBank) return false;
     if (search) {
       const q = search.toLowerCase();
-      const matchesMerchant = tx.merchant.toLowerCase().includes(q) || tx.merchantRaw.toLowerCase().includes(q);
-      const matchesCategory = tx.category.toLowerCase().includes(q);
+      const matchesMerchant = (tx.merchant ?? '').toLowerCase().includes(q) || (tx.merchantRaw ?? '').toLowerCase().includes(q);
+      const matchesCategory = (tx.category ?? '').toLowerCase().includes(q);
       const matchesDate = tx.date.includes(q);
       const matchesAmount = String(Math.abs(tx.amount)).includes(q);
       const matchesBank = (bankLabel(tx.sourceBank)).toLowerCase().includes(q);
@@ -588,9 +588,9 @@ export default function TransactionTable({ transactions, overrides, onOverride, 
   const sorted = [...filtered].sort((a, b) => {
     let av, bv;
     if (sortCol === 'date')     { av = a.date; bv = b.date; }
-    else if (sortCol === 'merchant') { av = a.merchant.toLowerCase(); bv = b.merchant.toLowerCase(); }
+    else if (sortCol === 'merchant') { av = (a.merchant ?? '').toLowerCase(); bv = (b.merchant ?? '').toLowerCase(); }
     else if (sortCol === 'amount')   { av = a.amount; bv = b.amount; }
-    else if (sortCol === 'category') { av = a.category.toLowerCase(); bv = b.category.toLowerCase(); }
+    else if (sortCol === 'category') { av = (a.category ?? '').toLowerCase(); bv = (b.category ?? '').toLowerCase(); }
     else { av = a[sortCol]; bv = b[sortCol]; }
     if (av < bv) return sortDir === 'asc' ? -1 : 1;
     if (av > bv) return sortDir === 'asc' ? 1 : -1;
